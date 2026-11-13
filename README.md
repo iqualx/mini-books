@@ -8,8 +8,9 @@ Nothing to install and no account needed. It runs entirely in your browser.
 
 ## What it's for
 
-- **Dollar Tree Super Glue foam mounting tabs** (0.5" × 0.75"). This is the built-in profile.
-- **3D printed mini books.** Get the customizable book model on MakerWorld...when I figure out the SCAD and upload it i'll update the readme with a link
+- **Small:** Dollar Tree Super Glue foam mounting tabs (0.5" × 0.75"), or the small 3D printed book.
+- **Medium and Large:** 3D printed hardcover books (18 × 25 × 5 mm and 22 × 30 × 6 mm).
+- **3D printed mini books.** Get the customizable book model on MakerWorld: YOUR-MAKERWORLD-LINK
 - **Anything else.** Choose **Custom** and enter your own sizes in inches or millimeters.
 
 ## How to use it
