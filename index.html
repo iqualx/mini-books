@@ -1,0 +1,1122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mini book cover maker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e7e9ee; --surface:#ffffff; --panel:#f7f8fa; --ink:#1c1e23; --muted:#5f6571; --line:#d4d7de;
+  --accent:#7d2ae8; --accent-ink:#ffffff; --accent-soft:#efe5fd; --guide:#a777f5;
+  --paper:#ffffff; --paper-ink:#6b7080; --empty:#f2f3f6; --empty-line:#c3c7d0; --danger:#c22f3a;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#17181c; --surface:#23252a; --panel:#1d1f23; --ink:#eceef2; --muted:#9ba1ac; --line:#383b42;
+    --accent:#a676ff; --accent-ink:#16091f; --accent-soft:#2f2547; --guide:#9b6cf0;
+    --paper:#2a2c32; --paper-ink:#a5aab5; --empty:#33363d; --empty-line:#535864; --danger:#ff6b74;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#17181c; --surface:#23252a; --panel:#1d1f23; --ink:#eceef2; --muted:#9ba1ac; --line:#383b42;
+  --accent:#a676ff; --accent-ink:#16091f; --accent-soft:#2f2547; --guide:#9b6cf0;
+  --paper:#2a2c32; --paper-ink:#a5aab5; --empty:#33363d; --empty-line:#535864; --danger:#ff6b74;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);
+  font-family:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.45}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);
+  border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:10px 16px;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px;white-space:nowrap}
+.ctx{flex:1;display:flex;justify-content:center;min-width:240px}
+.pill{display:flex;align-items:center;gap:2px;background:var(--surface);border:1px solid var(--line);
+  border-radius:12px;padding:4px;box-shadow:0 2px 10px rgba(0,0,0,.08);flex-wrap:wrap;justify-content:center}
+.pill .lbl{padding:0 10px;font-weight:600;white-space:nowrap}
+.pill .sep{width:1px;align-self:stretch;background:var(--line);margin:4px 4px}
+.pill button{border:0;background:transparent;padding:6px 10px;border-radius:8px;font-weight:500;white-space:nowrap}
+.pill button:hover:not(:disabled){background:var(--panel)}
+.pill button:disabled{opacity:.4;cursor:default}
+.hint{color:var(--muted);font-size:14px;text-align:center}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--surface);padding:8px 14px;border-radius:8px;font-weight:600}
+.btn:hover:not(:disabled){background:var(--panel)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+
+.app{display:grid;grid-template-columns:290px minmax(0,1fr);min-height:calc(100vh - 60px)}
+aside{background:var(--panel);border-right:1px solid var(--line);padding:18px 18px 40px}
+aside h2{font-size:14px;font-weight:700;margin:22px 0 10px}
+aside h2:first-child{margin-top:0}
+.field{display:grid;grid-template-columns:1fr 92px;align-items:center;gap:8px;margin-bottom:8px}
+.field label{font-size:14px}
+.field input[type=number],.field select{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface)}
+.note{font-size:13px;color:var(--muted);margin:6px 0 0}
+.total{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-top:10px;font-size:14px}
+.total strong{font-variant-numeric:tabular-nums}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:transparent;padding:7px 4px;font-size:14px;font-weight:500}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.seglabel{font-size:14px;margin:10px 0 5px}
+.check{display:flex;gap:8px;align-items:center;font-size:14px;margin:8px 0}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.linkbtn{border:0;background:none;padding:0;color:var(--muted);text-decoration:underline;font-size:13px;margin-right:14px}
+.linkbtn.danger{color:var(--danger)}
+.profiles{display:grid;gap:8px}
+.prof{display:block;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 12px;cursor:pointer}
+.prof:hover{border-color:var(--accent)}
+.prof[aria-checked="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--accent-soft)}
+.prof b{display:block;font-size:14px}
+.prof small{display:block;color:var(--muted);font-size:12.5px;margin-top:1px;font-variant-numeric:tabular-nums}
+.prof a{display:inline-block;margin-top:3px;color:var(--accent);font-size:12.5px;font-weight:600}
+#customFields[hidden]{display:none}
+
+main{padding:24px;overflow:auto}
+.page{background:var(--paper);border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.12),0 8px 30px rgba(0,0,0,.06);
+  padding:28px 28px 36px;min-height:60vh;outline:2px solid transparent;transition:outline-color .15s}
+.page.dropping{outline-color:var(--accent)}
+.page-head{text-align:center;margin-bottom:26px}
+.page-head h1{margin:0;font-size:24px;font-weight:700;color:var(--ink)}
+.page-head p{margin:4px auto 0;color:var(--paper-ink);font-style:italic;max-width:62ch}
+.grid{display:flex;flex-wrap:wrap;gap:26px 22px;justify-content:center}
+.book{display:flex;flex-direction:column;gap:6px}
+.cover{position:relative;display:flex;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.slot{position:relative;height:100%;background-color:var(--empty);background-repeat:no-repeat;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;outline:none;flex:none}
+.slot:not(.filled){background-image:repeating-linear-gradient(135deg,transparent 0 7px,rgba(127,127,127,.07) 7px 14px)}
+.slot+.slot::before{content:"";position:absolute;left:0;top:0;bottom:0;border-left:1px dashed var(--guide);opacity:.75;pointer-events:none}
+.slot::after{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 0 0 var(--accent);transition:box-shadow .1s}
+.slot:hover::after{box-shadow:inset 0 0 0 1px var(--accent)}
+.slot.sel::after{box-shadow:inset 0 0 0 2px var(--accent)}
+.slot:focus-visible::after{box-shadow:inset 0 0 0 3px var(--accent)}
+.slot.sel.filled{cursor:move;touch-action:none}
+.slot.over{background-color:var(--accent-soft)}
+.slot.over::after{box-shadow:inset 0 0 0 2px var(--accent)}
+.ph{font-size:12px;color:var(--paper-ink);font-weight:600;pointer-events:none;user-select:none}
+.spine .ph{writing-mode:vertical-rl;font-size:10px;letter-spacing:.04em}
+.foot{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--paper-ink)}
+.foot span{margin-right:auto;font-weight:600}
+.foot button{border:0;background:none;padding:2px 5px;border-radius:5px;color:var(--paper-ink);font-size:12px}
+.foot button:hover{background:var(--empty);color:var(--ink)}
+.add-tile{border:1.5px dashed var(--empty-line);background:transparent;border-radius:3px;color:var(--paper-ink);font-weight:600}
+.add-tile:hover{border-color:var(--accent);color:var(--accent)}
+.add-wrap{display:flex;flex-direction:column;gap:6px}
+.add-wrap .add-tile{flex:1;font-size:13px}
+.foot2{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--paper-ink)}
+.foot2 label{display:flex;align-items:center;gap:4px;cursor:pointer}
+.foot2 input[type=number]{width:48px;padding:1px 4px;border:1px solid var(--empty-line);border-radius:5px;background:var(--paper);color:var(--ink);font-size:12px}
+.foot2 input[type=checkbox]{accent-color:var(--accent);margin:0}
+.cover canvas{display:block}
+
+/* free-transform box */
+.xf{position:absolute;z-index:3;pointer-events:none;outline:1px solid var(--accent)}
+.xf .ghost{position:absolute;inset:0;background-size:100% 100%;opacity:.28}
+.xf .h{position:absolute;width:12px;height:12px;margin:-6px 0 0 -6px;background:#fff;border:1.5px solid var(--accent);
+  border-radius:50%;pointer-events:auto;touch-action:none;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.xf .h-n,.xf .h-s{width:18px;height:7px;margin:-3.5px 0 0 -9px;border-radius:4px}
+.xf .h-e,.xf .h-w{width:7px;height:18px;margin:-9px 0 0 -3.5px;border-radius:4px}
+.h-nw{left:0;top:0;cursor:nwse-resize}.h-n{left:50%;top:0;cursor:ns-resize}.h-ne{left:100%;top:0;cursor:nesw-resize}
+.h-e{left:100%;top:50%;cursor:ew-resize}.h-se{left:100%;top:100%;cursor:nwse-resize}.h-s{left:50%;top:100%;cursor:ns-resize}
+.h-sw{left:0;top:100%;cursor:nesw-resize}.h-w{left:0;top:50%;cursor:ew-resize}
+
+/* section options panel */
+.opts{position:fixed;right:16px;width:300px;max-height:calc(100vh - 120px);overflow:auto;z-index:6;
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 34px rgba(0,0,0,.18);padding:14px 16px 16px}
+.opts[hidden]{display:none}
+.opts-head{display:flex;align-items:center;margin-bottom:10px}
+.opts-head strong{flex:1}
+.opts-head button{border:0;background:none;font-size:20px;line-height:1;padding:2px 6px;border-radius:6px;color:var(--muted)}
+.opts-head button:hover{background:var(--panel)}
+.opts .row{display:grid;grid-template-columns:70px 1fr 44px;align-items:center;gap:8px;margin:8px 0;font-size:14px}
+.opts .row output{font-variant-numeric:tabular-nums;text-align:right;color:var(--muted);font-size:13px}
+.opts h3{font-size:13px;font-weight:700;margin:14px 0 6px}
+.anchor{display:grid;grid-template-columns:repeat(3,28px);gap:4px;margin:4px 0 6px}
+.anchor button{width:28px;height:28px;border:1px solid var(--line);border-radius:6px;background:var(--panel);padding:0;display:grid;place-items:center}
+.anchor button::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--muted)}
+.anchor button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent)}
+.anchor button[aria-pressed="true"]::before{background:var(--accent-ink)}
+.bgrow{display:flex;align-items:center;gap:10px;font-size:14px}
+.bgrow input[type=color]{width:40px;height:28px;border:1px solid var(--line);border-radius:6px;padding:0;background:none}
+.bgbtns{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.mini{border:1px solid var(--line);background:var(--panel);border-radius:7px;padding:4px 9px;font-size:13px;font-weight:500}
+.mini:hover{border-color:var(--accent)}
+.mini[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+#oPick{display:block;max-width:100%;margin-top:8px;cursor:crosshair;border:1px solid var(--line);border-radius:6px;
+  background:repeating-conic-gradient(#d8d8d8 0 25%,#ffffff 0 50%) 0 0/12px 12px}
+.pickrow{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:13px;color:var(--muted)}
+.sw{width:22px;height:22px;border-radius:5px;border:1px solid var(--line);flex:none}
+.srcinfo{font-size:12px;color:var(--muted);margin-top:12px;line-height:1.5}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);
+  background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:9px;font-size:14px;opacity:0;
+  transition:opacity .2s,transform .2s;pointer-events:none;max-width:90vw;text-align:center;z-index:20}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  aside{border-right:0;border-bottom:1px solid var(--line)}
+  main{padding:14px}
+  .page{padding:18px 14px 26px}
+  .opts{left:0;right:0;bottom:0;top:auto!important;width:auto;max-height:55vh;border-radius:14px 14px 0 0;
+    padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header id="hdr">
+  <div class="brand">Mini book cover maker</div>
+  <div class="ctx" id="ctx"></div>
+  <div class="actions">
+    <button class="btn" id="undo" title="Undo (Ctrl+Z)" disabled>Undo</button>
+    <button class="btn" id="redo" title="Redo (Ctrl+Y)" disabled>Redo</button>
+    <button class="btn" id="addBook">Add book</button>
+    <button class="btn primary" id="savePdf">Save PDF</button>
+  </div>
+</header>
+
+<div class="app">
+  <aside>
+    <h2>Profile</h2>
+    <div class="profiles" id="profiles" role="radiogroup" aria-label="Book size profile"></div>
+    <div id="customFields" hidden>
+    <h2 style="display:flex;align-items:center;justify-content:space-between">Custom size
+      <select id="f-unit" aria-label="Units" style="font-size:13px;font-weight:500;padding:2px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface)"><option value="in">inches</option><option value="mm">mm</option></select></h2>
+    <div class="field"><label for="f-back">Back width</label><input id="f-back" type="number" step="0.01" min="0.01"></div>
+    <div class="field"><label for="f-spine">Spine width</label><input id="f-spine" type="number" step="0.005" min="0.005"></div>
+    <div class="field"><label for="f-front">Front width</label><input id="f-front" type="number" step="0.01" min="0.01"></div>
+    <div class="field"><label for="f-height">Height</label><input id="f-height" type="number" step="0.01" min="0.01"></div>
+    <p class="note">Make the spine match the thickness of whatever the cover wraps around.</p>
+    </div>
+    <div class="total" id="total"></div>
+
+    <h2>3D printable book</h2>
+    <p class="note" style="margin-top:0">Customized a mini book .scad file? Load it to set matching cover sizes.</p>
+    <div class="bgbtns"><button class="mini" id="scadLoad">Load sizes from .scad</button></div>
+    <input type="file" id="scadPicker" accept=".scad,text/plain" hidden>
+
+    <h2>Default fit for new images</h2>
+    <div class="seglabel">Front and back</div>
+    <div class="seg" id="defCover" role="group" aria-label="Default fit for front and back">
+      <button data-v="stretch">Stretch</button><button data-v="fill">Fill</button><button data-v="fit">Fit</button>
+    </div>
+    <div class="seglabel">Spine</div>
+    <div class="seg" id="defSpine" role="group" aria-label="Default fit for spines">
+      <button data-v="stretch">Stretch</button><button data-v="fill">Fill</button><button data-v="fit">Fit</button>
+    </div>
+    <p class="note">Click any section to change its fit, or drag the image and its handles to place it by hand.</p>
+
+    <h2>Export</h2>
+    <div class="field"><label for="f-dpi">Resolution</label>
+      <select id="f-dpi"><option value="300">300 DPI</option><option value="600">600 DPI</option><option value="1200">1200 DPI</option></select></div>
+    <div class="field"><label for="f-margin">Page margin</label><input id="f-margin" type="number" step="0.05" min="0"></div>
+    <div class="field"><label for="f-gap">Gap between books</label><input id="f-gap" type="number" step="0.05" min="0"></div>
+    <label class="check"><input type="checkbox" id="f-cut"> Cut outlines in the PDF</label>
+    <label class="check"><input type="checkbox" id="f-fold"> Fold lines on exported images</label>
+    <p class="note" id="perPage"></p>
+    <p class="note">Print the PDF at 100% (Actual size) so the books come out at exact size.</p>
+
+    <h2>View</h2>
+    <label for="f-zoom" class="note" style="display:block;margin-bottom:4px">On-screen size</label>
+    <input id="f-zoom" type="range" min="120" max="500" step="10">
+
+    <p style="margin-top:22px">
+      <button class="linkbtn" id="reset">Reset settings</button>
+      <button class="linkbtn danger" id="clearAll">Remove all images</button>
+    </p>
+  </aside>
+
+  <main>
+    <div class="page" id="page">
+      <div class="page-head">
+        <h1>Mini book covers</h1>
+        <p>Click a section and paste (Ctrl+V), or drop images on it. Files with “front”, “back” or “spine” in the name go to the right spot on their own.</p>
+      </div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </main>
+</div>
+
+<div class="opts" id="opts" hidden>
+  <div class="opts-head"><strong id="oTitle"></strong><button id="oClose" aria-label="Close options">×</button></div>
+  <div class="seg" id="oFit" role="group" aria-label="Fit">
+    <button data-v="stretch">Stretch</button><button data-v="fill">Fill</button><button data-v="fit">Fit</button><button data-v="custom">Custom</button>
+  </div>
+  <p class="note" id="oFitNote"></p>
+  <label class="check"><input type="checkbox" id="oTrim"> Trim blank edges</label>
+  <div id="oPosWrap">
+    <h3>Position</h3>
+    <div class="anchor" id="oAnchor" role="group" aria-label="Anchor"></div>
+    <div class="row"><label for="oX">Left–right</label><input type="range" id="oX" min="0" max="100" step="1"><output id="oXv"></output></div>
+    <div class="row"><label for="oY">Up–down</label><input type="range" id="oY" min="0" max="100" step="1"><output id="oYv"></output></div>
+  </div>
+  <div id="oZoomWrap">
+    <div class="row"><label for="oZ">Zoom</label><input type="range" id="oZ" min="25" max="400" step="1"><output id="oZv"></output></div>
+  </div>
+  <div id="oBgWrap">
+    <h3>Background</h3>
+    <div class="bgrow"><input type="color" id="oBg" aria-label="Background color"><span id="oBgNote"></span></div>
+    <div class="bgbtns">
+      <button class="mini" id="oPickBtn" aria-pressed="false">Pick from image</button>
+      <button class="mini" id="oScreenBtn" hidden>Pick from screen</button>
+      <button class="mini" id="oBgAuto">Use edge color</button>
+    </div>
+    <div id="oPickWrap" hidden>
+      <canvas id="oPick" width="10" height="10"></canvas>
+      <div class="pickrow"><span class="sw" id="oSw"></span><span id="oSwHex">Click the image to use a color</span></div>
+    </div>
+  </div>
+  <div class="srcinfo" id="oInfo"></div>
+  <p style="margin:12px 0 0"><button class="linkbtn" id="oReset">Reset this section</button></p>
+</div>
+
+<input type="file" id="picker" accept="image/*" multiple hidden>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const ROLES = ['back','spine','front'];
+const NAMES = {back:'Back', spine:'Spine', front:'Front'};
+const FIT_NOTES = {
+  stretch:'Fills the section edge to edge. If the shapes don’t match, the image gets squished.',
+  fill:'Fills the section without squishing. Whatever hangs over the edges is cut off.',
+  fit:'Shows the whole image without squishing. Leftover space gets the background color.',
+  custom:'Drag the image to move it. Corner handles resize and keep the shape; side handles stretch it. Hold Shift on a corner to resize freely. Arrow keys nudge.'
+};
+const PROFILES = [
+  {id:'superglue', name:'Dollar Tree Super Glue foam tabs', back:0.5, spine:0.05, front:0.5, height:0.77, gap:0.15},
+  {id:'custom', name:'Custom'}
+];
+const SIZES = ['back','spine','front','height'];
+const DEFAULTS = {profile:'superglue', back:0.5, spine:0.05, front:0.5, height:0.77, custom:{back:0.5, spine:0.05, front:0.5, height:0.77},
+  dpi:600, fitCover:'stretch', fitSpine:'fill', fold:false, cut:true, margin:0.5, gap:0.15, zoom:260, unit:'in'};
+const KEY = 'mbc-settings-v3';
+let S = (() => { try { return {...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || '{}')}; } catch { return {...DEFAULTS}; } })();
+S.custom = {...DEFAULTS.custom, ...(S.custom || {})};
+if (!PROFILES.some(p => p.id === S.profile)) S.profile = 'superglue';
+function saveSettings(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} }
+
+const $ = id => document.getElementById(id);
+const grid = $('grid'), page = $('page');
+
+function applyProfile(id){
+  S.profile = id;
+  const p = id === 'custom' ? S.custom : PROFILES.find(x => x.id === id);
+  SIZES.forEach(k => S[k] = p[k]);
+  if (p.gap != null) S.gap = p.gap;
+  syncInputs(); render();
+}
+function renderProfiles(){
+  $('profiles').innerHTML = PROFILES.map(p => {
+    const d = p.id === 'custom' ? S.custom : p;
+    return `<div class="prof" role="radio" tabindex="0" data-id="${p.id}" aria-checked="${S.profile === p.id}"><b>${p.name}</b>`
+      + `<small>${fmt(d.back)} + ${fmt(d.spine)} + ${fmt(d.front)} × ${fmt(d.height)} in</small>`
+      + (p.link ? `<a href="${p.link}" target="_blank" rel="noopener">${p.linkText}</a>` : '') + `</div>`;
+  }).join('');
+  $('customFields').hidden = S.profile !== 'custom';
+}
+
+let books = [], nextId = 1, sel = null, pickTarget = null;
+function newBook(outline){ const b = {id: nextId++, back:null, spine:null, front:null, outline: !!outline, copies: 1}; books.push(b); return b; }
+for (let i = 0; i < 4; i++) newBook();
+
+/* ---------- toast ---------- */
+let toastT;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 3400); }
+
+/* ---------- undo / redo ---------- */
+// Image data is shared between snapshots and never released, so undo can always bring a removed image back.
+let undoStack = [], redoStack = [], editing = false;
+const cl = s => s ? {...s, free: s.free ? {...s.free} : null} : null;
+const snap = () => books.map(b => ({...b, back:cl(b.back), spine:cl(b.spine), front:cl(b.front)}));
+function pushHistory(){ undoStack.push(snap()); if (undoStack.length > 150) undoStack.shift(); redoStack = []; updateUndoUI(); }
+function beginEdit(){ if (!editing){ pushHistory(); editing = true; } }
+function endEdit(){ editing = false; }
+function restore(st){
+  books = st.map(b => ({...b, back:cl(b.back), spine:cl(b.spine), front:cl(b.front)}));
+  if (sel && !books.some(b => b.id === sel.id)) sel = null;
+  render();
+}
+function undo(){ if (!undoStack.length) return; endEdit(); redoStack.push(snap()); restore(undoStack.pop()); updateUndoUI(); }
+function redo(){ if (!redoStack.length) return; endEdit(); undoStack.push(snap()); restore(redoStack.pop()); updateUndoUI(); }
+function updateUndoUI(){ $('undo').disabled = !undoStack.length; $('redo').disabled = !redoStack.length; }
+
+/* ---------- images ---------- */
+function imageFiles(list){ return [...(list || [])].filter(f => f && (f.type.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp)$/i.test(f.name))); }
+function loadFile(file){
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => res({img, url, name: file.name || 'pasted image'});
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('load')); };
+    img.src = url;
+  });
+}
+const dims = s => [s.naturalWidth || s.width, s.naturalHeight || s.height];
+function rotatedCanvas(img, rot){
+  const c = document.createElement('canvas'), [sw, sh] = dims(img), swap = rot % 180 !== 0;
+  c.width = swap ? sh : sw; c.height = swap ? sw : sh;
+  const x = c.getContext('2d'); x.translate(c.width/2, c.height/2); x.rotate(rot * Math.PI / 180); x.drawImage(img, -sw/2, -sh/2);
+  return c;
+}
+// Box around the real artwork, ignoring transparent or near-white margins.
+function trimBox(base){
+  const [W, H] = dims(base);
+  const k = Math.min(1, 900 / Math.max(W, H)), w = Math.max(1, Math.round(W*k)), h = Math.max(1, Math.round(H*k));
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d', {willReadFrequently:true}); x.drawImage(base, 0, 0, w, h);
+  let d; try { d = x.getImageData(0, 0, w, h).data; } catch { return null; }
+  const blank = i => d[i+3] < 24 || (d[i] >= 240 && d[i+1] >= 240 && d[i+2] >= 240);
+  const rowBlank = y => { for (let i = 0; i < w; i++) if (!blank((y*w+i)*4)) return false; return true; };
+  const colBlank = (i, y0, y1) => { for (let y = y0; y <= y1; y++) if (!blank((y*w+i)*4)) return false; return true; };
+  let t = 0, b = h - 1; while (t < b && rowBlank(t)) t++; while (b > t && rowBlank(b)) b--;
+  let l = 0, r = w - 1; while (l < r && colBlank(l, t, b)) l++; while (r > l && colBlank(r, t, b)) r--;
+  if (t >= b || l >= r) return null;
+  const inset = k < 1 ? Math.ceil(1/k) : 0;
+  let x0 = Math.floor(l/k) + (l > 0 ? inset : 0), y0 = Math.floor(t/k) + (t > 0 ? inset : 0);
+  let x1 = Math.ceil((r+1)/k) - (r < w-1 ? inset : 0), y1 = Math.ceil((b+1)/k) - (b < h-1 ? inset : 0);
+  x1 = Math.min(W, x1); y1 = Math.min(H, y1);
+  if (x1 - x0 < 2 || y1 - y0 < 2) return null;
+  return {x:x0, y:y0, w:x1-x0, h:y1-y0};
+}
+const hex2 = v => Math.round(v).toString(16).padStart(2, '0');
+function edgeColor(src){
+  const n = 24, c = document.createElement('canvas'); c.width = c.height = n;
+  const x = c.getContext('2d', {willReadFrequently:true}); x.drawImage(src, 0, 0, n, n);
+  let d; try { d = x.getImageData(0, 0, n, n).data; } catch { return '#ffffff'; }
+  let r = 0, g = 0, b = 0, k = 0;
+  for (let i = 0; i < n; i++) for (const [px, py] of [[i,0],[i,n-1],[0,i],[n-1,i]]){
+    const o = (py*n+px)*4; if (d[o+3] < 24) continue; r += d[o]; g += d[o+1]; b += d[o+2]; k++;
+  }
+  return k ? '#' + hex2(r/k) + hex2(g/k) + hex2(b/k) : '#ffffff';
+}
+async function buildSrc(s){
+  let c = s.rot ? rotatedCanvas(s.img, s.rot) : null;
+  const base = c || s.img, [bw, bh] = dims(base);
+  const box = s.trim ? trimBox(base) : null;
+  s.trimmed = !!(box && (box.x > 0 || box.y > 0 || box.w < bw || box.h < bh));
+  if (s.trimmed){
+    const t = document.createElement('canvas'); t.width = box.w; t.height = box.h;
+    t.getContext('2d').drawImage(base, box.x, box.y, box.w, box.h, 0, 0, box.w, box.h); c = t;
+  }
+  s.src = c || s.img; [s.sw, s.sh] = dims(s.src);
+  s.autoBg = edgeColor(s.src);
+  if (c){ const blob = await new Promise(r => c.toBlob(r, 'image/png')); s.srcUrl = URL.createObjectURL(blob); }
+  else s.srcUrl = s.url;
+}
+function clearSlot(book, role){ book[role] = null; }
+function freshSettings(){ return {rot:0, trim:true, fit:null, posX:50, posY:50, free:null, bg:null}; }
+async function place(book, role, file){
+  let d;
+  try { d = await loadFile(file); } catch { toast(`Couldn’t open ${file.name || 'that image'}. Use a PNG, JPG, GIF or WebP.`); return false; }
+  const s = {...d, ...freshSettings()};
+  if (role === 'spine' && d.img.naturalWidth > d.img.naturalHeight) s.rot = 90;
+  await buildSrc(s);
+  book[role] = s;
+  return true;
+}
+
+/* ---------- fit math (shared by screen and export) ---------- */
+function fitOf(role, s){ return s.fit || (role === 'spine' ? S.fitSpine : S.fitCover); }
+// Fill size as fractions of the section, placed by posX/posY.
+function fillFree(role, s){
+  const dw = S[role], dh = S.height, k = Math.max(dw/s.sw, dh/s.sh), w = s.sw*k/dw, h = s.sh*k/dh;
+  return {x:(1-w)*s.posX/100, y:(1-h)*s.posY/100, w, h};
+}
+function rectFor(role, s, dw, dh){
+  const f = fitOf(role, s);
+  if (f === 'stretch') return {x:0, y:0, w:dw, h:dh, f};
+  if (f === 'custom'){ const r = s.free || fillFree(role, s); return {x:r.x*dw, y:r.y*dh, w:r.w*dw, h:r.h*dh, f}; }
+  const k = f === 'fit' ? Math.min(dw/s.sw, dh/s.sh) : Math.max(dw/s.sw, dh/s.sh);
+  const w = s.sw*k, h = s.sh*k;
+  return {x:(dw-w)*s.posX/100, y:(dh-h)*s.posY/100, w, h, f};
+}
+// Switch a section to Custom, starting from exactly where the image sits now.
+function toCustom(role, s){
+  if (s.fit === 'custom' && s.free) return;
+  const dw = S[role], dh = S.height, r = rectFor(role, s, dw, dh);
+  s.free = {x:r.x/dw, y:r.y/dh, w:r.w/dw, h:r.h/dh}; s.fit = 'custom';
+}
+const posFromFree = (x, w) => Math.abs(1 - w) < 1e-6 ? 50 : x / (1 - w) * 100;
+function customZoom(role, s){ const fr = s.free || fillFree(role, s), ff = fillFree(role, s); return Math.sqrt((fr.w/ff.w) * (fr.h/ff.h)); }
+const usesBg = f => f === 'fit' || f === 'custom';
+const bgOf = s => s.bg || s.autoBg || '#ffffff';
+
+/* ---------- routing ---------- */
+function roleOf(n){ n = (n || '').toLowerCase(); if (/spine/.test(n)) return 'spine'; if (/back|rear/.test(n)) return 'back'; if (/front|cover/.test(n)) return 'front'; return null; }
+function stemOf(n){ return (n || '').toLowerCase().replace(/\.[a-z0-9]+$/, '').replace(/front|back|rear|spine|cover/g, '').replace(/[\s_\-.()]+/g, ' ').trim(); }
+
+let lastPlaced = null;
+async function fillSequential(files, bi, ri, replaceFirst){
+  let first = true;
+  for (const f of files){
+    if (!(first && replaceFirst)){
+      while (true){
+        if (bi >= books.length) newBook();
+        if (!books[bi].outline && !books[bi][ROLES[ri]]) break;
+        ri++; if (ri > 2){ ri = 0; bi++; }
+      }
+    }
+    if (bi >= books.length) newBook();
+    if (await place(books[bi], ROLES[ri], f)) lastPlaced = {id: books[bi].id, role: ROLES[ri]};
+    first = false;
+    ri++; if (ri > 2){ ri = 0; bi++; }
+  }
+}
+async function placeByName(files, book){
+  const rest = [];
+  for (const f of files){ const r = roleOf(f.name); if (r) { if (await place(book, r, f)) lastPlaced = {id: book.id, role: r}; } else rest.push(f); }
+  return rest;
+}
+async function dropOnSlot(book, role, files){
+  if (files.length === 1){ if (await place(book, role, files[0])) lastPlaced = {id: book.id, role}; }
+  else {
+    const rest = await placeByName(files, book);
+    await fillSequential(rest, books.indexOf(book), ROLES.indexOf(role), true);
+  }
+}
+async function dropOnPage(files){
+  const groups = new Map(), loose = [];
+  for (const f of files){ if (roleOf(f.name)) { const k = stemOf(f.name); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(f); } else loose.push(f); }
+  for (const g of groups.values()){
+    const book = books.find(b => !b.outline && ROLES.every(r => !b[r])) || newBook();
+    await placeByName(g, book);
+  }
+  await fillSequential(loose, 0, 0, false);
+}
+function selectAfterFill(){
+  if (!lastPlaced) return;
+  const b = books.find(x => x.id === lastPlaced.id);
+  const next = b && ROLES.slice(ROLES.indexOf(lastPlaced.role) + 1).find(r => !b[r]);
+  sel = next ? {id: b.id, role: next} : {...lastPlaced};
+}
+
+/* ---------- render ---------- */
+function slotWidth(role){ return S[role] * S.zoom; }
+function styleSlot(el, role, s){
+  const dw = slotWidth(role), dh = S.height * S.zoom, r = rectFor(role, s, dw, dh);
+  el.style.backgroundImage = `url("${s.srcUrl}")`;
+  el.style.backgroundSize = `${r.w}px ${r.h}px`;
+  el.style.backgroundPosition = `${r.x}px ${r.y}px`;
+  el.style.backgroundColor = usesBg(r.f) ? bgOf(s) : '#ffffff';
+}
+function render(){
+  const z = S.zoom, hadFocus = grid.contains(document.activeElement);
+  grid.replaceChildren();
+  books.forEach((b, i) => {
+    const el = document.createElement('div'); el.className = 'book'; el.dataset.id = b.id;
+    const cover = document.createElement('div'); cover.className = 'cover'; cover.style.height = (S.height * z) + 'px';
+    if (b.outline) cover.append(outlineCanvas(z));
+    else ROLES.forEach(r => {
+      const s = document.createElement('div');
+      s.className = 'slot ' + r; s.dataset.role = r; s.tabIndex = 0; s.setAttribute('role', 'button');
+      s.style.width = slotWidth(r) + 'px';
+      const d = b[r];
+      if (d){ s.classList.add('filled'); styleSlot(s, r, d); s.title = d.name; }
+      else { const ph = document.createElement('span'); ph.className = 'ph'; ph.textContent = NAMES[r]; s.append(ph); }
+      s.setAttribute('aria-label', `Book ${i+1}, ${NAMES[r].toLowerCase()}${d ? '' : ', empty'}`);
+      if (sel && sel.id === b.id && sel.role === r) s.classList.add('sel');
+      cover.append(s);
+    });
+    const foot = document.createElement('div'); foot.className = 'foot';
+    foot.innerHTML = `<span>Book ${i+1}</span><button data-act="png">Save PNG</button><button data-act="copy">Copy</button><button data-act="del" aria-label="Delete book ${i+1}">Delete</button>`;
+    const foot2 = document.createElement('div'); foot2.className = 'foot2';
+    foot2.innerHTML = `<label><input type="checkbox" data-act="outline" ${b.outline ? 'checked' : ''}> Outline</label><label>Copies <input type="number" min="1" max="500" step="1" data-act="copies" value="${b.copies}" aria-label="Copies of book ${i+1}"></label>`;
+    el.append(cover, foot, foot2); grid.append(el);
+  });
+  const wrap = document.createElement('div'); wrap.className = 'book add-wrap';
+  wrap.style.width = ((S.back + S.spine + S.front) * z) + 'px'; wrap.style.height = (S.height * z) + 'px';
+  wrap.innerHTML = '<button class="add-tile" data-act="add">+ Add book</button><button class="add-tile" data-act="addoutline">+ Add outline book</button>';
+  grid.append(wrap);
+  if (hadFocus && sel) grid.querySelector(`.book[data-id="${sel.id}"] .slot.${sel.role}`)?.focus({preventScroll:true});
+  updateOverlay(); renderCtx(); renderOpts(); renderStats(); saveSettings(); updateUndoUI();
+}
+function selBook(){ return sel && books.find(x => x.id === sel.id); }
+function selSlot(){ const b = selBook(); return b && b[sel.role]; }
+function refreshSelectedSlot(){
+  const b = selBook(); if (!b) return;
+  const el = grid.querySelector(`.book[data-id="${b.id}"] .slot.${sel.role}`), s = b[sel.role];
+  if (el && s) styleSlot(el, sel.role, s);
+  updateOverlay();
+}
+// The outline and handles around the selected image, including the parts hanging outside the section.
+function updateOverlay(){
+  const b = selBook(), s = b && b[sel.role];
+  const cover = s && grid.querySelector(`.book[data-id="${b.id}"] .cover`);
+  grid.querySelectorAll('.xf').forEach(x => { if (x.parentNode !== cover) x.remove(); });
+  if (!cover) return;
+  let o = cover.querySelector('.xf');
+  if (!o){
+    o = document.createElement('div'); o.className = 'xf';
+    o.innerHTML = '<div class="ghost"></div>' + ['nw','n','ne','e','se','s','sw','w'].map(d => `<span class="h h-${d}" data-h="${d}"></span>`).join('');
+    cover.append(o);
+  }
+  const z = S.zoom, dw = S[sel.role]*z, dh = S.height*z, r = rectFor(sel.role, s, dw, dh);
+  const off = ROLES.slice(0, ROLES.indexOf(sel.role)).reduce((a, k) => a + S[k]*z, 0);
+  Object.assign(o.style, {left:(off + r.x) + 'px', top:r.y + 'px', width:r.w + 'px', height:r.h + 'px'});
+  o.firstChild.style.backgroundImage = `url("${s.srcUrl}")`;
+}
+function renderCtx(){
+  const c = $('ctx');
+  if (!sel){ c.innerHTML = `<div class="hint">Click a section, then paste or drop an image</div>`; return; }
+  const b = selBook(); if (!b){ sel = null; return renderCtx(); }
+  const filled = !!b[sel.role], n = books.indexOf(b) + 1;
+  c.innerHTML = `<div class="pill"><span class="lbl">${NAMES[sel.role]}, book ${n}</span><span class="sep"></span>
+    <button data-c="choose">${filled ? 'Replace' : 'Choose image'}</button>
+    <button data-c="rotate" ${filled ? '' : 'disabled'}>Rotate</button>
+    <button data-c="remove" ${filled ? '' : 'disabled'}>Remove</button>
+    <span class="sep"></span><button data-c="done">Done</button></div>`;
+}
+const ANCH = [[0,0],[50,0],[100,0],[0,50],[50,50],[100,50],[0,100],[50,100],[100,100]];
+$('oAnchor').innerHTML = ANCH.map(([x,y], i) => `<button data-i="${i}" aria-label="Anchor ${['top','middle','bottom'][y/50]} ${['left','center','right'][x/50]}"></button>`).join('');
+if ('EyeDropper' in window) $('oScreenBtn').hidden = false;
+function positionOpts(){ $('opts').style.top = Math.max($('hdr').getBoundingClientRect().bottom, 0) + 12 + 'px'; }
+let picking = false, pickKey = '';
+function renderOpts(){
+  const o = $('opts'), b = selBook(), s = b && b[sel.role];
+  if (!s){ o.hidden = true; picking = false; pickKey = ''; return; }
+  o.hidden = false; positionOpts();
+  const role = sel.role, f = fitOf(role, s);
+  $('oTitle').textContent = `${NAMES[role]}, book ${books.indexOf(b) + 1}`;
+  $('oFit').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.v === f)));
+  $('oFitNote').textContent = FIT_NOTES[f];
+  $('oTrim').checked = s.trim;
+  $('oPosWrap').hidden = f === 'stretch';
+  $('oZoomWrap').hidden = f !== 'custom';
+  $('oBgWrap').hidden = !usesBg(f);
+  let px_ = s.posX, py_ = s.posY;
+  if (f === 'custom'){
+    const fr = s.free || fillFree(role, s), z = customZoom(role, s);
+    px_ = posFromFree(fr.x, fr.w); py_ = posFromFree(fr.y, fr.h);
+    $('oZ').value = Math.round(z * 100); $('oZv').textContent = Math.round(z * 100) + '%';
+  }
+  $('oX').value = Math.min(100, Math.max(0, px_)); $('oXv').textContent = Math.round(px_) + '%';
+  $('oY').value = Math.min(100, Math.max(0, py_)); $('oYv').textContent = Math.round(py_) + '%';
+  $('oAnchor').querySelectorAll('button').forEach((x, i) => x.setAttribute('aria-pressed', String(ANCH[i][0] === Math.round(px_) && ANCH[i][1] === Math.round(py_))));
+  $('oBg').value = bgOf(s); $('oBgNote').textContent = s.bg ? s.bg.toUpperCase() : 'Edge color';
+  const showPick = picking && usesBg(f);
+  $('oPickWrap').hidden = !showPick;
+  $('oPickBtn').setAttribute('aria-pressed', String(showPick));
+  $('oPickBtn').textContent = showPick ? 'Stop picking' : 'Pick from image';
+  if (showPick){ const key = b.id + role + s.srcUrl; if (key !== pickKey){ drawPickPreview(s); pickKey = key; } } else pickKey = '';
+  const W = S[role], H = S.height, squish = (s.sw/s.sh) / (W/H);
+  let msg = `Image ${s.sw} × ${s.sh} px${s.trimmed ? ' after trimming' : ''}.`;
+  if (Math.abs(squish - 1) > 0.06){
+    msg += squish > 1
+      ? ` It’s ${squish.toFixed(1)}× wider than this section, so Stretch squeezes it to ${Math.round(100/squish)}% width.`
+      : ` It’s ${(1/squish).toFixed(1)}× narrower than this section, so Stretch widens it ${(1/squish).toFixed(1)}×.`;
+  } else msg += ' Its shape matches this section.';
+  msg += ` Exports at ${px(W)} × ${px(H)} px.`;
+  $('oInfo').textContent = msg;
+}
+function fmt(v){ return (+v.toFixed(3)).toString(); }
+function px(i){ return Math.round(i * S.dpi); }
+function layout(){
+  const W = S.back + S.spine + S.front;
+  const cols = Math.max(1, Math.floor((8.5 - 2*S.margin + S.gap) / (W + S.gap)));
+  const rows = Math.max(1, Math.floor((11 - 2*S.margin + S.gap) / (S.height + S.gap)));
+  return {W, cols, rows, per: cols*rows, ox: (8.5 - (cols*W + (cols-1)*S.gap)) / 2, oy: S.margin};
+}
+const printable = b => b.outline || ROLES.some(r => b[r]);
+function printCount(){
+  const per = layout().per, n = books.reduce((a, b) => a + (printable(b) ? Math.max(1, b.copies | 0) : 0), 0);
+  return {n, pages: n ? Math.ceil(n / per) : 0};
+}
+function renderStats(){
+  const W = S.back + S.spine + S.front;
+  $('total').innerHTML = `Full book: <strong>${fmt(W)} × ${fmt(S.height)} in</strong><br>Saved image: <strong>${px(W)} × ${px(S.height)} px</strong><br>Spine: <strong>${px(S.spine)} px wide</strong>`;
+  const L = layout();
+  const P = printCount();
+  $('perPage').textContent = `${L.per} books fit on a letter page (${L.cols} across, ${L.rows} down). `
+    + (P.n ? `Ready to print: ${P.n} book${P.n === 1 ? '' : 's'} on ${P.pages} page${P.pages === 1 ? '' : 's'}.` : 'Add images or an outline book to print.')
+    + ' Empty books are skipped.';
+  if (!pdfBusy) $('savePdf').textContent = P.pages ? `Save PDF (${P.pages} page${P.pages === 1 ? '' : 's'})` : 'Save PDF';
+}
+
+/* ---------- eyedropper ---------- */
+function drawPickPreview(s){
+  const c = $('oPick'), k = Math.min(266 / s.sw, 220 / s.sh);
+  c.width = Math.max(1, Math.round(s.sw * k)); c.height = Math.max(1, Math.round(s.sh * k));
+  const x = c.getContext('2d'); x.imageSmoothingQuality = 'high'; x.clearRect(0, 0, c.width, c.height); x.drawImage(s.src, 0, 0, c.width, c.height);
+}
+function sampleAt(s, e){
+  const c = $('oPick'), r = c.getBoundingClientRect();
+  const fx = Math.min(0.9999, Math.max(0, (e.clientX - r.left) / r.width)), fy = Math.min(0.9999, Math.max(0, (e.clientY - r.top) / r.height));
+  const t = document.createElement('canvas'); t.width = t.height = 1;
+  const x = t.getContext('2d', {willReadFrequently:true});
+  x.drawImage(s.src, Math.floor(fx * s.sw), Math.floor(fy * s.sh), 1, 1, 0, 0, 1, 1);
+  const d = x.getImageData(0, 0, 1, 1).data;
+  return d[3] < 24 ? null : '#' + hex2(d[0]) + hex2(d[1]) + hex2(d[2]);
+}
+$('oPick').addEventListener('pointermove', e => {
+  const s = selSlot(); if (!s) return; const c = sampleAt(s, e);
+  $('oSw').style.background = c || 'transparent'; $('oSwHex').textContent = c ? c.toUpperCase() : 'See-through spot';
+});
+$('oPick').addEventListener('click', e => {
+  const s = selSlot(); if (!s) return; const c = sampleAt(s, e);
+  if (!c){ toast('That spot is see-through. Pick a colored spot.'); return; }
+  pushHistory(); s.bg = c; picking = false; refreshSelectedSlot(); renderOpts();
+});
+$('oPickBtn').addEventListener('click', () => { picking = !picking; renderOpts(); });
+$('oScreenBtn').addEventListener('click', async () => {
+  const s = selSlot(); if (!s) return;
+  try {
+    const r = await new EyeDropper().open();
+    pushHistory(); s.bg = r.sRGBHex; refreshSelectedSlot(); renderOpts();
+  } catch (err){ if (!err || err.name !== 'AbortError') toast('Screen picking isn’t available here. Use Pick from image.'); }
+});
+
+/* ---------- outline (draw-your-own) books ---------- */
+function drawOutline(x, k){
+  const e = [0, S.back, S.back + S.spine, S.back + S.spine + S.front].map(v => v*k), H = S.height*k;
+  const lw = Math.max(1, 0.008*k);
+  const line = (x1, y1, x2, y2, color, dash) => { x.strokeStyle = color; x.lineWidth = lw; x.setLineDash(dash || []); x.beginPath(); x.moveTo(x1, y1); x.lineTo(x2, y2); x.stroke(); };
+  x.save(); x.lineCap = 'round';
+  x.fillStyle = '#ffffff'; x.fillRect(0, 0, e[3], H);
+  // dashed fold lines on both sides of the spine
+  [e[1], e[2]].forEach(v => line(v, 0, v, H, '#8a8a8a', [3*lw, 3*lw]));
+  x.setLineDash([]); x.strokeStyle = '#222222'; x.lineWidth = lw; x.strokeRect(lw/2, lw/2, e[3] - lw, H - lw);
+  x.restore();
+}
+function outlineCanvas(z){
+  const dpr = window.devicePixelRatio || 1, W = (S.back + S.spine + S.front)*z, H = S.height*z;
+  const c = document.createElement('canvas'); c.width = Math.round(W*dpr); c.height = Math.round(H*dpr);
+  c.style.width = W + 'px'; c.style.height = H + 'px';
+  drawOutline(c.getContext('2d'), z*dpr); return c;
+}
+
+/* ---------- export ---------- */
+function renderBook(b){
+  const c = document.createElement('canvas');
+  const e = [0, px(S.back), px(S.back + S.spine), px(S.back + S.spine + S.front)];
+  c.width = e[3]; c.height = px(S.height);
+  const x = c.getContext('2d', {willReadFrequently:true});
+  x.fillStyle = '#ffffff'; x.fillRect(0, 0, c.width, c.height);
+  x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+  if (b.outline){ drawOutline(x, S.dpi); return c; }
+  ROLES.forEach((role, i) => {
+    const s = b[role]; if (!s) return;
+    const ex = e[i], ew = e[i+1] - e[i], r = rectFor(role, s, ew, c.height);
+    x.save(); x.beginPath(); x.rect(ex, 0, ew, c.height); x.clip();
+    if (usesBg(r.f)){ x.fillStyle = bgOf(s); x.fillRect(ex, 0, ew, c.height); }
+    x.drawImage(s.src, ex + r.x, r.y, r.w, r.h);
+    x.restore();
+  });
+  if (S.fold){
+    x.strokeStyle = 'rgba(0,0,0,.35)'; x.lineWidth = 1; x.setLineDash([3,3]);
+    [e[1], e[2]].forEach(v => { x.beginPath(); x.moveTo(v + .5, 0); x.lineTo(v + .5, c.height); x.stroke(); });
+  }
+  return c;
+}
+const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++){ let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(a){ let c = 0xFFFFFFFF; for (let i = 0; i < a.length; i++) c = CRC[(c ^ a[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function withDpi(buf, dpi){
+  const ppm = Math.round(dpi / 0.0254), ch = new Uint8Array(21), dv = new DataView(ch.buffer);
+  dv.setUint32(0, 9); ch.set([0x70,0x48,0x59,0x73], 4); dv.setUint32(8, ppm); dv.setUint32(12, ppm); ch[16] = 1;
+  dv.setUint32(17, crc32(ch.subarray(4, 17)));
+  const out = new Uint8Array(buf.length + 21); out.set(buf.subarray(0, 33)); out.set(ch, 33); out.set(buf.subarray(33), 54);
+  return out;
+}
+async function pngBlob(c){
+  const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+  return new Blob([withDpi(new Uint8Array(await blob.arrayBuffer()), S.dpi)], {type:'image/png'});
+}
+
+// Built-in PDF writer: no outside library to load.
+async function pdfImage(canvas){
+  const w = canvas.width, h = canvas.height;
+  if (window.CompressionStream){
+    const d = canvas.getContext('2d').getImageData(0, 0, w, h).data, rgb = new Uint8Array(w*h*3);
+    for (let i = 0, j = 0; i < d.length; i += 4, j += 3){ rgb[j] = d[i]; rgb[j+1] = d[i+1]; rgb[j+2] = d[i+2]; }
+    const stream = new Blob([rgb]).stream().pipeThrough(new CompressionStream('deflate'));
+    return {w, h, filter:'FlateDecode', bytes:new Uint8Array(await new Response(stream).arrayBuffer())};
+  }
+  const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.95));
+  return {w, h, filter:'DCTDecode', bytes:new Uint8Array(await blob.arrayBuffer())};
+}
+function pdfBlob(pages){
+  const enc = new TextEncoder(), chunks = [], offs = []; let len = 0;
+  const put = v => { const u = typeof v === 'string' ? enc.encode(v) : v; chunks.push(u); len += u.length; };
+  const f = v => (+v.toFixed(3)).toString();
+  let n = 2;
+  const plan = pages.map(items => ({page:++n, content:++n, imgs:items.map(() => ++n), items}));
+  const obj = (num, dict, stream) => {
+    offs[num] = len; put(`${num} 0 obj\n${dict}\n`);
+    if (stream){ put('stream\n'); put(stream); put('\nendstream\n'); }
+    put('endobj\n');
+  };
+  put('%PDF-1.4\n'); put(new Uint8Array([37, 226, 227, 207, 211, 10]));
+  obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+  obj(2, `<< /Type /Pages /Kids [${plan.map(p => p.page + ' 0 R').join(' ')}] /Count ${plan.length} >>`);
+  for (const p of plan){
+    const xo = p.imgs.map((num, i) => `/Im${i} ${num} 0 R`).join(' ');
+    obj(p.page, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /XObject << ${xo} >> >> /Contents ${p.content} 0 R >>`);
+    let cs = '';
+    p.items.forEach((it, i) => {
+      const X = it.x*72, Y = (11 - it.y - it.h)*72, W = it.w*72, H = it.h*72;
+      cs += `q ${f(W)} 0 0 ${f(H)} ${f(X)} ${f(Y)} cm /Im${i} Do Q\n`;
+      if (it.cut) cs += `q 0.667 G 0.3 w ${f(X)} ${f(Y)} ${f(W)} ${f(H)} re S Q\n`;
+    });
+    const cb = enc.encode(cs);
+    obj(p.content, `<< /Length ${cb.length} >>`, cb);
+    p.items.forEach((it, i) => {
+      const im = it.img;
+      obj(p.imgs[i], `<< /Type /XObject /Subtype /Image /Width ${im.w} /Height ${im.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /${im.filter} /Length ${im.bytes.length} >>`, im.bytes);
+    });
+  }
+  const xref = len;
+  let x = `xref\n0 ${n+1}\n0000000000 65535 f \n`;
+  for (let i = 1; i <= n; i++) x += String(offs[i]).padStart(10, '0') + ' 00000 n \n';
+  put(x);
+  put(`trailer\n<< /Size ${n+1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
+  return new Blob(chunks, {type:'application/pdf'});
+}
+
+let dlP = null;
+function getDl(){ if (!dlP && window.claude && window.claude.use) dlP = window.claude.use('downloads').catch(() => null); return dlP || Promise.resolve(null); }
+setTimeout(getDl, 0);
+async function saveFile(name, blob){
+  const dl = await getDl();
+  if (dl){
+    try { await dl.save({filename: name, data: blob}); toast(`Saved ${name}`); }
+    catch (err){
+      if (err && err.code === 'declined') return;
+      if (err && err.code === 'rate_limited') { toast('A save prompt is already open. Finish it, then try again.'); return; }
+      toast(`Couldn’t save ${name}.`);
+    }
+    return;
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+function bookFileName(b){
+  const n = books.indexOf(b) + 1, src = (b.front || b.back || b.spine);
+  const stem = src ? stemOf(src.name).replace(/[^a-z0-9 ]/g, '').trim().replace(/ +/g, '-') : '';
+  return (stem && stem !== 'pasted-image' && stem !== 'image' ? stem : `book-${n}`) + '.png';
+}
+async function savePng(b){
+  if (!printable(b)) { toast('This book has no images yet.'); return; }
+  saveFile(bookFileName(b), await pngBlob(renderBook(b)));
+}
+async function copyBook(b){
+  if (!printable(b)) { toast('This book has no images yet.'); return; }
+  try {
+    const blob = await pngBlob(renderBook(b));
+    await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+    toast('Copied. Paste it into Canva, then set W and H in Position.');
+  } catch { toast('Copying is blocked here. Use Save PNG instead.'); }
+}
+let pdfBusy = false;
+async function savePdf(){
+  const filled = books.filter(printable).flatMap(b => Array(Math.max(1, b.copies | 0)).fill(b));
+  if (!filled.length) { toast('Add an image or an outline book first.'); return; }
+  if (pdfBusy) return;
+  pdfBusy = true; $('savePdf').disabled = true; $('savePdf').textContent = 'Building PDF…';
+  try {
+    const L = layout(), pages = [], cache = new Map();
+    for (let i = 0; i < filled.length; i++){
+      const k = i % L.per; if (k === 0) pages.push([]);
+      const x = L.ox + (k % L.cols) * (L.W + S.gap), y = L.oy + Math.floor(k / L.cols) * (S.height + S.gap);
+      if (!cache.has(filled[i])) cache.set(filled[i], await pdfImage(renderBook(filled[i])));
+      pages[pages.length - 1].push({img: cache.get(filled[i]), x, y, w: L.W, h: S.height, cut: S.cut});
+    }
+    await saveFile('mini-book-covers.pdf', pdfBlob(pages));
+  } catch { toast('Couldn’t build the PDF. Try 300 DPI, or save books as PNGs.'); }
+  finally { pdfBusy = false; $('savePdf').disabled = false; renderStats(); }
+}
+
+/* ---------- interaction ---------- */
+function bookOf(el){ const be = el.closest('.book'); return be && books.find(b => b.id === +be.dataset.id); }
+function openPicker(target){ pickTarget = target; $('picker').value = ''; $('picker').click(); }
+function selectSlot(el){
+  endEdit();
+  sel = {id: bookOf(el).id, role: el.dataset.role};
+  grid.querySelectorAll('.slot.sel').forEach(x => x.classList.remove('sel'));
+  el.classList.add('sel'); updateOverlay(); renderCtx(); renderOpts();
+}
+
+grid.addEventListener('click', e => {
+  const act = e.target.closest('[data-act]');
+  if (act){
+    const a = act.dataset.act;
+    if (a === 'add'){ pushHistory(); newBook(); render(); return; }
+    if (a === 'addoutline'){ pushHistory(); newBook(true); render(); return; }
+    const b = bookOf(act); if (!b) return;
+    if (a === 'png') savePng(b);
+    if (a === 'copy') copyBook(b);
+    if (a === 'del'){ pushHistory(); books = books.filter(x => x !== b); if (sel && sel.id === b.id) sel = null; render(); }
+    return;
+  }
+  if (e.target.closest('.h')) return;
+  const s = e.target.closest('.slot'); if (!s) return;
+  e.stopPropagation();
+  if (dragJustEnded) return;
+  selectSlot(s);
+  if (e.detail === 2) openPicker({...sel});
+});
+grid.addEventListener('change', e => {
+  const t = e.target.closest('[data-act]'); if (!t) return;
+  const b = bookOf(t); if (!b) return;
+  if (t.dataset.act === 'outline'){ pushHistory(); b.outline = t.checked; if (sel && sel.id === b.id){ sel = null; endEdit(); } render(); }
+  if (t.dataset.act === 'copies'){
+    const v = Math.max(1, Math.min(500, Math.round(+t.value || 1)));
+    if (v !== b.copies){ pushHistory(); b.copies = v; }
+    t.value = v; renderStats();
+  }
+});
+grid.addEventListener('keydown', e => {
+  const s = e.target.closest('.slot'); if (!s || (e.key !== 'Enter' && e.key !== ' ')) return;
+  e.preventDefault();
+  const b = bookOf(s), already = sel && sel.id === b.id && sel.role === s.dataset.role;
+  if (already) openPicker({...sel}); else selectSlot(s);
+});
+page.addEventListener('click', e => { if (!e.target.closest('.slot,[data-act],.xf') && sel){ sel = null; endEdit(); render(); } });
+
+/* free transform: drag the image or its handles */
+let drag = null, dragJustEnded = false, rafPending = false;
+function scheduleRefresh(){ if (rafPending) return; rafPending = true; requestAnimationFrame(() => { rafPending = false; refreshSelectedSlot(); renderOpts(); }); }
+const snapTo = (v, targets, t) => { for (const g of targets) if (Math.abs(v - g) <= t) return g; return v; };
+grid.addEventListener('pointerdown', e => {
+  if (e.button !== 0) return;
+  const s = selSlot(); if (!s) return;
+  const h = e.target.closest('.h'), slotEl = e.target.closest('.slot');
+  if (!h && !(slotEl && slotEl.classList.contains('sel'))) return;
+  e.preventDefault();
+  drag = {mode: h ? h.dataset.h : 'move', s, role: sel.role, sx: e.clientX, sy: e.clientY, started: false};
+  grid.setPointerCapture(e.pointerId);
+});
+grid.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+  if (!drag.started){
+    if (Math.abs(dx) + Math.abs(dy) < 3) return;
+    pushHistory(); toCustom(drag.role, drag.s);
+    const z = S.zoom; drag.dw = S[drag.role]*z; drag.dh = S.height*z;
+    const f = drag.s.free; drag.r0 = {x:f.x*drag.dw, y:f.y*drag.dh, w:f.w*drag.dw, h:f.h*drag.dh};
+    drag.started = true;
+  }
+  const {r0, dw, dh, mode} = drag;
+  let {x, y, w, h} = r0;
+  if (mode === 'move'){
+    x = snapTo(x + dx, [0, dw - w, (dw - w)/2], 5);
+    y = snapTo(y + dy, [0, dh - h, (dh - h)/2], 5);
+  } else {
+    let nw = w, nh = h;
+    if (mode.includes('e')) nw = w + dx;
+    if (mode.includes('w')) nw = w - dx;
+    if (mode.includes('s')) nh = h + dy;
+    if (mode.includes('n')) nh = h - dy;
+    if (mode.length === 2 && !e.shiftKey){ const k = Math.max(0.02, (nw/w + nh/h) / 2); nw = w*k; nh = h*k; }
+    nw = Math.max(4, nw); nh = Math.max(4, nh);
+    if (mode.includes('w')) x = r0.x + r0.w - nw;
+    if (mode.includes('n')) y = r0.y + r0.h - nh;
+    w = nw; h = nh;
+  }
+  drag.s.free = {x: x/dw, y: y/dh, w: w/dw, h: h/dh};
+  scheduleRefresh();
+});
+function endDrag(e){
+  if (!drag) return;
+  if (drag.started){ dragJustEnded = true; setTimeout(() => dragJustEnded = false, 0); }
+  drag = null;
+  try { grid.releasePointerCapture(e.pointerId); } catch {}
+}
+grid.addEventListener('pointerup', endDrag);
+grid.addEventListener('pointercancel', endDrag);
+
+$('picker').addEventListener('change', async e => {
+  const files = imageFiles(e.target.files); if (!files.length) return;
+  pushHistory(); lastPlaced = null;
+  const t = pickTarget && books.find(b => b.id === pickTarget.id);
+  if (t) await dropOnSlot(t, pickTarget.role, files); else await dropOnPage(files);
+  selectAfterFill(); render();
+});
+
+$('ctx').addEventListener('click', async e => {
+  const c = e.target.closest('[data-c]'); if (!c || !sel) return;
+  const b = selBook(); if (!b) return;
+  const cmd = c.dataset.c, s = b[sel.role];
+  if (cmd === 'choose') openPicker({...sel});
+  if (cmd === 'rotate' && s){ pushHistory(); const n = cl(s); n.rot = (n.rot + 90) % 360; await buildSrc(n); b[sel.role] = n; render(); }
+  if (cmd === 'remove' && s){ pushHistory(); clearSlot(b, sel.role); render(); }
+  if (cmd === 'done'){ sel = null; endEdit(); render(); }
+});
+
+/* section options */
+$('oClose').addEventListener('click', () => { sel = null; endEdit(); render(); });
+$('oFit').addEventListener('click', e => {
+  const btn = e.target.closest('[data-v]'), s = selSlot(); if (!btn || !s) return;
+  if (btn.dataset.v === fitOf(sel.role, s)) return;
+  pushHistory();
+  if (btn.dataset.v === 'custom') { s.fit = null; toCustom(sel.role, s); } else s.fit = btn.dataset.v;
+  refreshSelectedSlot(); renderOpts();
+});
+$('oTrim').addEventListener('change', async e => {
+  const b = selBook(), s = selSlot(); if (!s) return;
+  pushHistory(); const n = cl(s); n.trim = e.target.checked; await buildSrc(n); b[sel.role] = n;
+  refreshSelectedSlot(); renderOpts();
+});
+$('oAnchor').addEventListener('click', e => {
+  const btn = e.target.closest('[data-i]'), s = selSlot(); if (!btn || !s) return;
+  pushHistory();
+  const [ax, ay] = ANCH[+btn.dataset.i];
+  if (fitOf(sel.role, s) === 'custom'){ toCustom(sel.role, s); const f = s.free; s.free = {...f, x:(1 - f.w)*ax/100, y:(1 - f.h)*ay/100}; }
+  else { if (fitOf(sel.role, s) === 'stretch') s.fit = 'fill'; s.posX = ax; s.posY = ay; }
+  refreshSelectedSlot(); renderOpts();
+});
+function setPos(axis, v){
+  const s = selSlot(); if (!s) return; beginEdit();
+  if (fitOf(sel.role, s) === 'custom'){ toCustom(sel.role, s); const f = {...s.free}; if (axis === 'x') f.x = (1 - f.w)*v/100; else f.y = (1 - f.h)*v/100; s.free = f; }
+  else if (axis === 'x') s.posX = v; else s.posY = v;
+  refreshSelectedSlot(); renderOpts();
+}
+$('oX').addEventListener('input', e => setPos('x', +e.target.value));
+$('oY').addEventListener('input', e => setPos('y', +e.target.value));
+$('oZ').addEventListener('input', e => {
+  const s = selSlot(); if (!s) return; beginEdit(); toCustom(sel.role, s);
+  const k = (+e.target.value / 100) / customZoom(sel.role, s), f = s.free, cx = f.x + f.w/2, cy = f.y + f.h/2;
+  s.free = {w: f.w*k, h: f.h*k, x: cx - f.w*k/2, y: cy - f.h*k/2};
+  refreshSelectedSlot(); renderOpts();
+});
+$('oBg').addEventListener('input', e => { const s = selSlot(); if (!s) return; beginEdit(); s.bg = e.target.value; refreshSelectedSlot(); renderOpts(); });
+['oX','oY','oZ','oBg'].forEach(id => $(id).addEventListener('change', endEdit));
+$('oBgAuto').addEventListener('click', () => { const s = selSlot(); if (!s || !s.bg) return; pushHistory(); s.bg = null; refreshSelectedSlot(); renderOpts(); });
+$('oReset').addEventListener('click', async () => {
+  const b = selBook(), s = selSlot(); if (!s) return;
+  pushHistory(); const n = {...cl(s), ...freshSettings(), rot: s.rot}; await buildSrc(n); b[sel.role] = n;
+  refreshSelectedSlot(); renderOpts();
+});
+window.addEventListener('resize', () => { if (!$('opts').hidden) positionOpts(); });
+
+/* drag and drop files */
+let overEl = null;
+function setOver(el){ if (overEl === el) return; overEl && overEl.classList.remove('over'); overEl = el; el && el.classList.add('over'); }
+page.addEventListener('dragover', e => {
+  e.preventDefault(); e.dataTransfer.dropEffect = 'copy';
+  page.classList.add('dropping'); setOver(e.target.closest('.slot'));
+});
+page.addEventListener('dragleave', e => { if (!page.contains(e.relatedTarget)){ page.classList.remove('dropping'); setOver(null); } });
+page.addEventListener('drop', async e => {
+  e.preventDefault(); page.classList.remove('dropping');
+  const slotEl = e.target.closest('.slot'); setOver(null);
+  const files = imageFiles(e.dataTransfer.files);
+  if (!files.length){ toast('That wasn’t an image file. Save the image to your computer first, then drop the file.'); return; }
+  pushHistory(); lastPlaced = null;
+  if (slotEl) await dropOnSlot(bookOf(slotEl), slotEl.dataset.role, files); else await dropOnPage(files);
+  selectAfterFill(); render();
+});
+window.addEventListener('dragover', e => e.preventDefault());
+window.addEventListener('drop', e => e.preventDefault());
+
+document.addEventListener('paste', async e => {
+  if (e.target.closest && e.target.closest('input,select,textarea')) return;
+  let files = imageFiles(e.clipboardData && e.clipboardData.files);
+  if (!files.length) files = [...((e.clipboardData && e.clipboardData.items) || [])]
+    .filter(i => i.kind === 'file' && i.type.startsWith('image/')).map(i => i.getAsFile()).filter(Boolean);
+  if (!files.length){ toast('The clipboard has no image. Copy an image, then paste.'); return; }
+  e.preventDefault(); pushHistory(); lastPlaced = null;
+  const t = selBook();
+  if (t) await dropOnSlot(t, sel.role, files); else await fillSequential(files, 0, 0, false);
+  selectAfterFill(); render();
+});
+let lastNudge = 0;
+document.addEventListener('keydown', async e => {
+  const typing = e.target.matches && e.target.matches('input[type=number],input[type=text],textarea,select');
+  const mod = e.ctrlKey || e.metaKey;
+  if (mod && !typing){
+    const k = e.key.toLowerCase();
+    if (k === 'z' && !e.shiftKey){ e.preventDefault(); undo(); return; }
+    if (k === 'y' || (k === 'z' && e.shiftKey)){ e.preventDefault(); redo(); return; }
+  }
+  if (e.target.closest && e.target.closest('input,select,textarea')) return;
+  if (e.key === 'Escape' && picking){ picking = false; renderOpts(); return; }
+  if (!sel) return;
+  const b = selBook(); if (!b) return;
+  const s = b[sel.role];
+  if ((e.key === 'Delete' || e.key === 'Backspace') && s){ e.preventDefault(); pushHistory(); clearSlot(b, sel.role); render(); }
+  else if ((e.key === 'r' || e.key === 'R') && !mod && s){ pushHistory(); const n = cl(s); n.rot = (n.rot + 90) % 360; await buildSrc(n); b[sel.role] = n; render(); }
+  else if (e.key.startsWith('Arrow') && s && !mod){
+    e.preventDefault();
+    const now = Date.now(); if (now - lastNudge > 800) pushHistory(); lastNudge = now;
+    toCustom(sel.role, s);
+    const step = e.shiftKey ? 10 : 1, f = {...s.free};
+    if (e.key === 'ArrowLeft') f.x -= step / slotWidth(sel.role);
+    if (e.key === 'ArrowRight') f.x += step / slotWidth(sel.role);
+    if (e.key === 'ArrowUp') f.y -= step / (S.height * S.zoom);
+    if (e.key === 'ArrowDown') f.y += step / (S.height * S.zoom);
+    s.free = f; refreshSelectedSlot(); renderOpts();
+  }
+  else if (e.key === 'Escape'){ sel = null; endEdit(); render(); }
+});
+$('undo').addEventListener('click', undo);
+$('redo').addEventListener('click', redo);
+
+/* ---------- settings ---------- */
+const NUMS = ['back','spine','front','height','margin','gap'];
+function syncInputs(){
+  const uf = S.unit === 'mm' ? 25.4 : 1;
+  $('f-unit').value = S.unit;
+  NUMS.forEach(k => $('f-' + k).value = SIZES.includes(k) ? Math.round(S.custom[k] * uf * 1000) / 1000 : S[k]);
+  SIZES.forEach(k => $('f-' + k).step = S.unit === 'mm' ? '0.1' : (k === 'spine' ? '0.005' : '0.01'));
+  renderProfiles();
+  $('f-dpi').value = String(S.dpi); $('f-cut').checked = S.cut; $('f-fold').checked = S.fold; $('f-zoom').value = S.zoom;
+  $('defCover').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === S.fitCover)));
+  $('defSpine').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === S.fitSpine)));
+}
+NUMS.forEach(k => $('f-' + k).addEventListener('input', e => {
+  let v = parseFloat(e.target.value); const min = (k === 'margin' || k === 'gap') ? 0 : 0.001;
+  if (SIZES.includes(k) && S.unit === 'mm') v = v / 25.4;
+  if (isFinite(v) && v >= min){ S[k] = v; if (SIZES.includes(k)){ S.custom[k] = v; renderProfiles(); } render(); }
+}));
+$('f-dpi').addEventListener('change', e => { S.dpi = +e.target.value; render(); });
+$('f-cut').addEventListener('change', e => { S.cut = e.target.checked; saveSettings(); });
+$('f-fold').addEventListener('change', e => { S.fold = e.target.checked; saveSettings(); });
+$('f-zoom').addEventListener('input', e => { S.zoom = +e.target.value; render(); });
+$('defCover').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (!b) return; S.fitCover = b.dataset.v; syncInputs(); render(); });
+$('defSpine').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (!b) return; S.fitSpine = b.dataset.v; syncInputs(); render(); });
+$('reset').addEventListener('click', () => { const z = S.zoom; S = {...DEFAULTS, custom: {...DEFAULTS.custom}, zoom: z}; applyProfile(S.profile); toast('Settings reset.'); });
+$('profiles').addEventListener('click', e => { if (e.target.closest('a')) return; const c = e.target.closest('.prof'); if (c) applyProfile(c.dataset.id); });
+$('profiles').addEventListener('keydown', e => { const c = e.target.closest('.prof'); if (!c || (e.key !== 'Enter' && e.key !== ' ')) return; e.preventDefault(); applyProfile(c.dataset.id); $('profiles').querySelector(`[data-id="${c.dataset.id}"]`)?.focus(); });
+$('clearAll').addEventListener('click', () => { if (!books.some(b => ROLES.some(r => b[r]))) return; pushHistory(); books.forEach(b => ROLES.forEach(r => clearSlot(b, r))); sel = null; render(); toast('Removed all images. Undo brings them back.'); });
+$('addBook').addEventListener('click', () => { pushHistory(); newBook(); render(); });
+/* ---------- 3D printable book (.scad) ---------- */
+const r3 = v => Math.round(v * 1000) / 1000;
+function readScad(text){
+  const get = n => { const m = text.match(new RegExp('^\\s*' + n + '\\s*=\\s*([^;]+);', 'm')); return m ? m[1].trim().replace(/^"|"$/g, '') : null; };
+  const preset = get('preset');
+  if (preset === 'foam_tab'){ applyProfile('superglue'); return 'Dollar Tree Super Glue foam tabs'; }
+  if (preset === 'mini_book'){ S.custom = {back:0.709, spine:0.197, front:0.709, height:0.984}; applyProfile('custom'); return 'Custom (18 × 25 × 5 mm book)'; }
+  const w = parseFloat(get('book_width')), h = parseFloat(get('book_height')), t = parseFloat(get('book_thickness'));
+  const ov = parseFloat(get('cover_overhang')) || 0;
+  if (![w, h, t].every(v => isFinite(v) && v > 0)) return null;
+  S.custom = {back: r3(w / 25.4), spine: r3(t / 25.4), front: r3(w / 25.4), height: r3((h + 2*ov) / 25.4)};
+  applyProfile('custom');
+  return 'Custom';
+}
+$('f-unit').addEventListener('change', e => { S.unit = e.target.value; syncInputs(); saveSettings(); });
+$('scadLoad').addEventListener('click', () => { $('scadPicker').value = ''; $('scadPicker').click(); });
+$('scadPicker').addEventListener('change', async e => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  const which = readScad(await f.text());
+  toast(which ? `Loaded sizes: ${which}.` : 'Couldn’t find book_width, book_height and book_thickness in that file.');
+});
+$('savePdf').addEventListener('click', savePdf);
+
+applyProfile(S.profile);
+</script>
+</body>
+</html>
