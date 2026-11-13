@@ -299,7 +299,9 @@ const FIT_NOTES = {
   custom:'Drag the image to move it. Corner handles resize and keep the shape; side handles stretch it. Hold Shift on a corner to resize freely. Arrow keys nudge.'
 };
 const PROFILES = [
-  {id:'superglue', name:'Dollar Tree Super Glue foam tabs', back:0.5, spine:0.05, front:0.5, height:0.77, gap:0.15},
+  {id:'superglue', name:'Small: Dollar Tree foam tab size', back:0.5, spine:0.05, front:0.5, height:0.77, gap:0.15},
+  {id:'medium', name:'Medium 3D print book (18 × 25 × 5 mm)', back:0.709, spine:0.197, front:0.709, height:0.984, gap:0.1},
+  {id:'large', name:'Large 3D print book (22 × 30 × 6 mm)', back:0.866, spine:0.236, front:0.866, height:1.181, gap:0.1},
   {id:'custom', name:'Custom'}
 ];
 const SIZES = ['back','spine','front','height'];
@@ -1098,8 +1100,8 @@ const r3 = v => Math.round(v * 1000) / 1000;
 function readScad(text){
   const get = n => { const m = text.match(new RegExp('^\\s*' + n + '\\s*=\\s*([^;]+);', 'm')); return m ? m[1].trim().replace(/^"|"$/g, '') : null; };
   const preset = get('preset');
-  if (preset === 'foam_tab'){ applyProfile('superglue'); return 'Dollar Tree Super Glue foam tabs'; }
-  if (preset === 'mini_book'){ S.custom = {back:0.709, spine:0.197, front:0.709, height:0.984}; applyProfile('custom'); return 'Custom (18 × 25 × 5 mm book)'; }
+  const presetMap = {small:'superglue', foam_tab:'superglue', medium:'medium', mini_book:'medium', large:'large'};
+  if (presetMap[preset]){ applyProfile(presetMap[preset]); return PROFILES.find(p => p.id === presetMap[preset]).name; }
   const w = parseFloat(get('book_width')), h = parseFloat(get('book_height')), t = parseFloat(get('book_thickness'));
   const ov = parseFloat(get('cover_overhang')) || 0;
   if (![w, h, t].every(v => isFinite(v) && v > 0)) return null;
